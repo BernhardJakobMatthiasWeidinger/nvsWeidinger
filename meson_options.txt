@@ -1,0 +1,14 @@
+option('include_dir',
+       type: 'string',
+       value: './include',
+       description: 'the include dir')
+
+option('cli11_include_dir',
+       type: 'string',
+       value: '../',
+       description: 'the spdlog include dir')
+
+option('spdlog_include_dir',
+       type: 'string',
+       value: '/home/bernhard/Schreibtisch/vorgabe/software',
+       description: 'the spdlog include dir')
