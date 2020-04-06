@@ -6,9 +6,9 @@
 using namespace std;
 
 int main() {
-    spdlog::info("Hello");
+    //spdlog::info("Hello");
 
-    auto r = cpr::Get(cpr::Url{"https://api.github.com/repos/whoshuu/cpr/contributors"},
+    auto r = cpr::Get(cpr::Url{"localhost"},
                       cpr::Authentication{"user", "pass"},
                       cpr::Parameters{{"anon", "true"}, {"key", "value"}});
     //r.status_code;                  // 200

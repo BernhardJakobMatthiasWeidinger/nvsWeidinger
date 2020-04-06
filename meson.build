@@ -13,6 +13,9 @@ inc_dir = include_directories([get_option('include_dir'),
 cc = meson.get_compiler('cpp')
 lib_fmt = cc.find_library('fmt', dirs: ['/home/bernhard/Desktop/vorgabe/software/fmt-6.1.2/build/'])
 lib_http_parser = cc.find_library('http_parser', dirs: ['/home/bernhard/Desktop/http-parser/build/'])
+lib_curl = cc.find_library('curl', dirs: ['/home/bernhard/Desktop/vorgabe/software/cpr/build/lib'])
+lib_cpr = cc.find_library('cpr', dirs: ['/home/bernhard/Desktop/vorgabe/software/cpr/build/lib'])
+
 
 srcClient = ['src/client/main.cpp']
 srcServer = ['src/server/main.cpp'] 
@@ -22,7 +25,7 @@ thread_dep = dependency('threads')
 executable('client',
             sources: srcClient,
             include_directories: inc_dir,
-            dependencies: thread_dep)
+            dependencies: [lib_curl, lib_cpr, thread_dep])
 
 executable('server',
             sources: srcServer,
