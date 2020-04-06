@@ -10,5 +10,10 @@ option('cli11_include_dir',
 
 option('spdlog_include_dir',
        type: 'string',
-       value: '/home/bernhard/Schreibtisch/vorgabe/software',
+       value: '/home/bernhard/Desktop/vorgabe/software',
+       description: 'the spdlog include dir')
+
+option('cpr_include_dir',
+       type: 'string',
+       value: '/home/bernhard/Desktop/vorgabe/software/cpr/include/',
        description: 'the spdlog include dir')
