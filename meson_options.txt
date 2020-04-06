@@ -16,4 +16,25 @@ option('spdlog_include_dir',
 option('cpr_include_dir',
        type: 'string',
        value: '/home/bernhard/Desktop/vorgabe/software/cpr/include/',
-       description: 'the spdlog include dir')
+       description: 'the cpr include dir')
+
+option('asio_include_dir',
+       type: 'string',
+       value: '/home/bernhard/Desktop/vorgabe/software/asio-1.14.0/include',
+       description: 'the asio include dir')
+
+option('fmt_include_dir',
+       type: 'string',
+       value: '/home/bernhard/Desktop/vorgabe/software/fmt-6.1.2/include',
+       description: 'the fmt include dir')
+
+option('http_parser_dir',
+       type: 'string',
+       value: '/home/bernhard/Desktop/http-parser',
+       description: 'the http-parser dir')
+
+option('restinio_include_dir',
+       type: 'string',
+       value: '/home/bernhard/Desktop/restinio/dev/',
+       description: 'the restinio include dir')
+       
