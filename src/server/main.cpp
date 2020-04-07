@@ -3,6 +3,9 @@
 
 #include "base64.h"
 #include "restinio/all.hpp"
+//#include "restinio/tls.hpp"
+
+#include "materialverwaltung.h"
 
 using namespace std;
 using namespace restinio;
@@ -54,14 +57,30 @@ auto server_handler() {
 int main() {
     try {
         using traits_t =
-			traits_t<
+			//restinio::single_thread_tls_traits_t<
+            restinio::traits_t<
 				asio_timer_manager_t,
 				single_threaded_ostream_logger_t,
 				router_t >;
 
+        /*asio::ssl::context tls_context{ asio::ssl::context::sslv23 };
+        tls_context.set_options(
+        asio::ssl::context::default_workarounds |
+        asio::ssl::context::no_sslv2 |
+        asio::ssl::context::single_dh_use );
+
+        string certs_dir{"."};
+
+        tls_context.use_certificate_chain_file( certs_dir + "/server.pem" );
+        tls_context.use_private_key_file(
+            certs_dir + "/key.pem",
+            asio::ssl::context::pem );
+        tls_context.use_tmp_dh_file( certs_dir + "/dh2048.pem" );*/
+
         run(on_this_thread<traits_t>()
             .port(8080).address("localhost")
             .request_handler(server_handler()));
+            //.tls_context( std::move(tls_context)));
             //.request_handler(handler));
     } catch( const std::exception & ex ) {
 		cerr << "Error: " << ex.what() << endl;
