@@ -17,8 +17,8 @@ lib_curl = cc.find_library('curl', dirs: ['/home/bernhard/Desktop/vorgabe/softwa
 lib_cpr = cc.find_library('cpr', dirs: ['/home/bernhard/Desktop/vorgabe/software/cpr/build/lib'])
 
 
-srcClient = ['src/client/main.cpp']
-srcServer = ['src/server/main.cpp'] 
+srcClient = ['src/client/main.cpp', 'src/base64.cpp']
+srcServer = ['src/server/main.cpp', 'src/base64.cpp'] 
 
 thread_dep = dependency('threads')
 

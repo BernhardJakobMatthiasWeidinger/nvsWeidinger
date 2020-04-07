@@ -10,6 +10,7 @@ vector<string> signedUsers;
 
 using router_t = router::express_router_t<>;
 
+//checks, if user is already logged in
 bool checkAuth(request_handle_t req) {
     if (!count(signedUsers.begin(), signedUsers.end(), 
         req->header().get_field("Authorization"))) {
@@ -22,14 +23,19 @@ auto server_handler()
 {
 	auto router = std::make_unique< router_t >();
 
+    //GET request for Homepage
+	router->http_get("/login", []( auto req, auto) {
+		return req->create_response().done();
+	});
+
 	//GET request for Homepage
-	router->http_get( "/", []( auto req, auto) {
+	router->http_get("/", []( auto req, auto) {
         if (!checkAuth(req)) {
             return req->create_response(status_unauthorized()).done();
         }
 
 		return req->create_response().done();
-	} );
+	});
     
 	router->non_matched_request_handler(
 		[]( auto req ){

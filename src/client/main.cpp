@@ -23,6 +23,23 @@ int main() {
         cout << r.text << endl;
     } else if (r.status_code == 401) {
         spdlog::info("Not authorized, redirect to /login");
+        cout << "You are not logged in yet!" << endl;
+
+        string username;
+        string password;
+
+        cout << "Username: ";
+        cin >> username;
+        cout << endl;
+
+        cout << "Password: ";
+        cin >> password;
+        cout << endl;
+
+        const string auth{username + ':' + password};
+
+        cout << base64_encode(reinterpret_cast<const unsigned char*>(auth.c_str()), 
+        auth.length()) << endl;
     } else if (r.status_code == 0) {
         spdlog::error("Server not reachable");
     } else {
