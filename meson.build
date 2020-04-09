@@ -23,14 +23,15 @@ lib_cpr = cc.find_library('cpr', dirs: ['/home/bernhard/Desktop/vorgabe/software
 srcClient = ['src/client/main.cpp', 'src/base64.cpp']
 srcServer = ['src/server/main.cpp', 'src/base64.cpp', 'src/pystring.cpp'] 
 
+ssl_dep = dependency('openssl')
 thread_dep = dependency('threads')
 
 executable('client',
             sources: srcClient,
             include_directories: inc_dir,
-            dependencies: [lib_curl, lib_cpr, thread_dep])
+            dependencies: [lib_curl, lib_cpr])
 
 executable('server',
             sources: srcServer,
             include_directories: inc_dir,
-            dependencies: [lib_fmt, lib_http_parser, thread_dep])
+            dependencies: [lib_fmt, lib_http_parser, thread_dep, ssl_dep])
