@@ -86,6 +86,7 @@ bool on_post_seil(vector<string> tokens, string filename="") {
         return false;
     }
 
+
     return true;
 }
 
@@ -161,16 +162,16 @@ bool on_post_wartung(vector<string> tokens, string filename) {
 
 //appends all lines from client file to server file if callback returns true
 auto on_post(request_handle_t req, string filename, string objectName,
-             function<bool(vector<string>, string)> callback) {
+             function<bool(vector<string>, string)> callback, string_view_t cnt) {
     if (!checkAuth(req)) {
         return req->create_response(status_unauthorized()).done();
     }
 
     bool valid{true};
+    vector<string> lines;
 
     const auto result = enumerate_parts_with_files(*req,
         [&](part_description_t part) {
-        vector<string> lines;
         pystring::split(string(part.body), lines, "\n");
 
         for (string line : lines) {
@@ -178,19 +179,27 @@ auto on_post(request_handle_t req, string filename, string objectName,
             pystring::split(line, tokens, ",");
 
             valid = callback(tokens, filename);
-        }
             
-        if (valid) {
-            ofstream file;
-            file.open(path + "server" + filename + ".csv", ios_base::app);
-            file << "\n" << part.body;
-            file.close();
+            if (!valid) {
+                break;
+            }
         }
 
         return handling_result_t::continue_enumeration;
     });
 
     if (valid) {
+        ofstream file;
+        file.open(path + "server" + filename + ".csv", ios_base::app);
+
+        for (uint i{}; i < lines.size(); ++i) {
+            if (cnt != "0" && i == stoi(string(cnt))) {
+                break;
+            }
+            file << "\n" << lines[i];
+        }
+        file.close();
+
         //Send response with code 200 back
         return req->create_response()
             .set_body("Successfully posted " + objectName + "!")
@@ -231,7 +240,12 @@ auto server_handler() {
 
     //post new seilware
     router->http_post("/seilware", [](auto req, auto) {
-        return on_post(req, "Seil", "Seilware(n)", on_post_seil);
+        return on_post(req, "Seil", "Seilware(n)", on_post_seil, "0");
+	});
+
+    //post new seilware
+    router->http_post("/seilware/:count", [](auto req, auto params) {
+        return on_post(req, "Seil", "Seilware(n)", on_post_seil, params["count"]);
 	});
 
     //get all hartwaren
@@ -241,7 +255,12 @@ auto server_handler() {
 
     //post new hartwaren
     router->http_post("/hartware", [](auto req, auto) {
-        return on_post(req, "Hart", "Hartware(n)", on_post_hart);
+        return on_post(req, "Hart", "Hartware(n)", on_post_hart, "0");
+	});
+
+    //post new hartwaren
+    router->http_post("/hartware/:count", [](auto req, auto params) {
+        return on_post(req, "Hart", "Hartware(n)", on_post_hart, params["count"]);
 	});
 
     //get all fahrzeuge
@@ -251,20 +270,29 @@ auto server_handler() {
 
     //post new fahrzeuge
     router->http_post("/fahrzeug", [](auto req, auto) {
-        return on_post(req, "Fahr", "Fahrzeug(e)", on_post_wartung);
+        return on_post(req, "Fahr", "Fahrzeug(e)", on_post_wartung, "0");
+	});
+
+    //post new fahrzeuge
+    router->http_post("/fahrzeug/:count", [](auto req, auto params) {
+        return on_post(req, "Fahr", "Fahrzeug(e)", on_post_wartung, params["count"]);
 	});
 
     //get all immobilien
     router->http_get("/immobilie", [](auto req, auto) {
         return on_get(req, "Immobilie");
 	});
-    
+
     //post new immobilien
     router->http_post("/immobilie", [](auto req, auto) {
-        return on_post(req, "Immobilie", "Immobilie(n)", on_post_wartung);
+        return on_post(req, "Immobilie", "Immobilie(n)", on_post_wartung, "0");
 	});
 
-    
+    //post new immobilien
+    router->http_post("/immobilie/:count", [](auto req, auto params) {
+        return on_post(req, "Immobilie", "Immobilie(n)", on_post_wartung, params["count"]);
+	});
+
     
     //will be called, if route doesn't match exisitng ones
 	router->non_matched_request_handler(
@@ -306,7 +334,6 @@ int main() {
             .port(1234).address("localhost")
             .request_handler(server_handler()));
             //.tls_context( std::move(tls_context)));
-            //.request_handler(handler));
     } catch( const std::exception & ex ) {
 		cerr << "Error: " << ex.what() << endl;
 		return 1;

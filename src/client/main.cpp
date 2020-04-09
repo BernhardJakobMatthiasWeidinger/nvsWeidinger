@@ -72,6 +72,9 @@ int main(int argc, char* argv[]) {
     app.get_option_group("object")
         ->add_flag("-i,--immobilie", i_flag, "Immobilie");
 
+    int cnt{};
+    app.add_option("--cnt", cnt, "Count of Inventarobjekte (default = all)");
+
     CLI11_PARSE(app, argc, argv);
 
     string url{""};
@@ -89,6 +92,10 @@ int main(int argc, char* argv[]) {
             url = "/immobilie";
         } else {
             url = "/seilware";
+        }
+
+        if (cnt != 0) {
+            url += "/" + to_string(cnt);
         }
 
         auto r = cpr::Post(cpr::Url{"localhost:1234" + url},
