@@ -92,7 +92,6 @@ bool on_post_seil(vector<string> tokens, string filename="") {
 //checks if tokens for Hartwaren are correct
 bool on_post_hart(vector<string> tokens, string filename="") {
     if (tokens.size() != 6) {
-        cout << "Länge: " << tokens.size() << endl;
         return false;
     }
 
@@ -123,24 +122,17 @@ bool on_post_hart(vector<string> tokens, string filename="") {
 
 //checks if tokens for Wartungsobjekte are correct
 bool on_post_wartung(vector<string> tokens, string filename) {
-    for (string token : tokens) {
-        cout << token << endl;
-    }
-
     if (tokens.size() != 6) {
-        cout << "Länge " << tokens.size() << endl;
         return false;
     }
 
     if (!(tokens[0] == "true" || tokens[0] == "false")) {
-        cout << 0 << endl;
         return false;
     }
     
     ifstream file;
     file.open(path + "server" + filename + ".csv");
     if (file.fail()) {
-        cout << "file" << endl;
         return false;
     }
 
@@ -150,17 +142,17 @@ bool on_post_wartung(vector<string> tokens, string filename) {
         string token{};
         int cnt{};
 
-        while (getline(ss, token, ':')) {
+        while (getline(ss, token, ',')) {
             if (cnt == 3) {
                 if (token == tokens[3]) {
                     return false;
                 }
             }
+            cnt++;
         }
     }
 
     if (!pystring::isdigit(tokens[4])) {
-        cout << 4 << endl;
         return false;
     }
 
