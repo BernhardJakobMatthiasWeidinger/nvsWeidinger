@@ -12,7 +12,13 @@ using namespace restinio;
 
 //vector of already logged in users, 
 //example user: maxi:secret
-vector<string> signedUsers = {"bWF4aTpzZWNyZXQ="};
+vector<string> signedUsers{};
+
+
+vector<Seilware> seilwaren{};
+vector<Hartware> hartwaren{};
+vector<Fahrzeug> fehrzeuge{};
+vector<Immobilie> immobilien{};
 
 using router_t = router::express_router_t<>;
 
@@ -28,11 +34,51 @@ bool checkAuth(request_handle_t req) {
     return true; 
 }
 
+//appends the user to the already logged in users
+void login(request_handle_t req) {
+    std::stringstream ss(req->header().get_field("Authorization"));
+    std::string token;
+    while (std::getline(ss, token, ':')) {}
+
+    signedUsers.push_back(token);
+}
+
 auto server_handler() {
 	auto router = std::make_unique< router_t >();
 
 	//GET request for Homepage
-	router->http_get("/", []( auto req, auto) {
+	router->http_get("/", [](auto req, auto) {
+        if (!checkAuth(req)) {
+            return req->create_response(status_unauthorized()).done();
+        }
+
+		return req->create_response()
+            .set_body("Successfully signed in!")
+            .done();
+	});
+
+    //GET request for Homepage
+	router->http_get("/login", [](auto req, auto) {
+        login(req);
+
+		return req->create_response()
+            .set_body("Successfully logged in!")
+            .done();
+	});
+
+    //get all seilwaren
+    router->http_get("/seilware", [](auto req, auto) {
+        if (!checkAuth(req)) {
+            return req->create_response(status_unauthorized()).done();
+        }
+
+		return req->create_response()
+            .set_body(seilwaren)
+            .done();
+	});
+
+    //post new seilware
+    router->http_post("/seilware", [](auto req, auto) {
         if (!checkAuth(req)) {
             return req->create_response(status_unauthorized()).done();
         }
@@ -42,6 +88,7 @@ auto server_handler() {
             .done();
 	});
     
+    //will be called, if route doesn't match exisitng ones
 	router->non_matched_request_handler(
 		[]( auto req ){
 			return
