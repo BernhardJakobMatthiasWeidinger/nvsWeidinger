@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
     app.add_option("--password", password, "Password to log in")->required();
 
     //File for post requests
-    string file{"../src/client/clientSeil.csv"};
+    string file{"../src/client/csvFiles/clientSeil.csv"};
     app.add_option("--file", file, "File, which will be processed at the server");
 
     //Method, which will be used

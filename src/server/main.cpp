@@ -18,7 +18,7 @@ using namespace restinio::file_upload;
 //vector of already logged in users, 
 //example user: maxi:secret
 vector<string> signedUsers{};
-string path = "../src/server/";
+string path = "../src/server/csvFiles/";
 ofstream file;
 
 using router_t = router::express_router_t<>;
@@ -45,6 +45,194 @@ void login(request_handle_t req) {
     signedUsers.push_back(token);
 }
 
+//returns all lines of specific file if authorized
+auto on_get(request_handle_t req, string fileName) {
+    if (!checkAuth(req)) {
+        return req->create_response(status_unauthorized()).done();
+    }
+
+	return req->create_response()
+        .set_body(restinio::sendfile(path + "server" + fileName + ".csv"))
+        .done();
+}
+
+//checks if tokens for Seilwaren are correct
+bool on_post_seil(vector<string> tokens) {
+    if (tokens.size() != 7) {
+        return false;
+    }
+
+    if (!(tokens[0] == "true" || tokens[0] == "false")) {
+        return false;
+    }
+
+    if (!pystring::isdigit(tokens[4])) {
+        return false;
+    }
+
+    if (!(tokens[5] == "Kletterseil" || 
+        tokens[5] == "StatischesLastseil" || 
+        tokens[5] == "Canconingseil" || 
+        tokens[5] == "Reepschnur" || 
+        tokens[5] == "Bandmaterial")) {
+        return false;
+    }
+
+    if (!(tokens[6] == "nie" || 
+        tokens[6] == "selten" || 
+        tokens[6] == "gelegentlich" || 
+        tokens[6] == "regelmäßig" || 
+        tokens[6] == "häufig" || 
+        tokens[6] == "ständig")) {
+        return false;
+    }
+
+    return true;
+}
+
+//checks if tokens for Hartwaren are correct
+bool on_post_hart(vector<string> tokens) {
+    if (tokens.size() != 7) {
+        return false;
+    }
+
+    if (!(tokens[0] == "true" || tokens[0] == "false")) {
+        return false;
+    }
+
+    if (!pystring::isdigit(tokens[4])) {
+        return false;
+    }
+
+    if (!(tokens[5] == "Kletterseil" || 
+        tokens[5] == "StatischesLastseil" || 
+        tokens[5] == "Canconingseil" || 
+        tokens[5] == "Reepschnur" || 
+        tokens[5] == "Bandmaterial")) {
+        return false;
+    }
+
+    if (!(tokens[6] == "nie" || 
+        tokens[6] == "selten" || 
+        tokens[6] == "gelegentlich" || 
+        tokens[6] == "regelmäßig" || 
+        tokens[6] == "häufig" || 
+        tokens[6] == "ständig")) {
+        return false;
+    }
+
+    return true;
+}
+
+//checks if tokens for Seilwaren are correct
+bool on_post_fahr(vector<string> tokens) {
+    if (tokens.size() != 7) {
+        return false;
+    }
+
+    if (!(tokens[0] == "true" || tokens[0] == "false")) {
+        return false;
+    }
+
+    if (!pystring::isdigit(tokens[4])) {
+        return false;
+    }
+
+    if (!(tokens[5] == "Kletterseil" || 
+        tokens[5] == "StatischesLastseil" || 
+        tokens[5] == "Canconingseil" || 
+        tokens[5] == "Reepschnur" || 
+        tokens[5] == "Bandmaterial")) {
+        return false;
+    }
+
+    if (!(tokens[6] == "nie" || 
+        tokens[6] == "selten" || 
+        tokens[6] == "gelegentlich" || 
+        tokens[6] == "regelmäßig" || 
+        tokens[6] == "häufig" || 
+        tokens[6] == "ständig")) {
+        return false;
+    }
+
+    return true;
+}
+
+//checks if tokens for Seilwaren are correct
+bool on_post_immobilie(vector<string> tokens) {
+    if (tokens.size() != 7) {
+        return false;
+    }
+
+    if (!(tokens[0] == "true" || tokens[0] == "false")) {
+        return false;
+    }
+
+    if (!pystring::isdigit(tokens[4])) {
+        return false;
+    }
+
+    if (!(tokens[5] == "Kletterseil" || 
+        tokens[5] == "StatischesLastseil" || 
+        tokens[5] == "Canconingseil" || 
+        tokens[5] == "Reepschnur" || 
+        tokens[5] == "Bandmaterial")) {
+        return false;
+    }
+
+    if (!(tokens[6] == "nie" || 
+        tokens[6] == "selten" || 
+        tokens[6] == "gelegentlich" || 
+        tokens[6] == "regelmäßig" || 
+        tokens[6] == "häufig" || 
+        tokens[6] == "ständig")) {
+        return false;
+    }
+
+    return true;
+}
+
+//appends all lines from client file to server file if callback returns true
+auto on_post(request_handle_t req, string fileName, string objectName,
+             function<bool(vector<string>)> callback) {
+    if (!checkAuth(req)) {
+        return req->create_response(status_unauthorized()).done();
+    }
+
+    bool valid{true};
+
+    const auto result = enumerate_parts_with_files(*req,
+        [&](part_description_t part) {
+        vector<string> lines;
+        pystring::split(string(part.body), lines, "\n");
+
+        for (string line : lines) {
+            vector<string> tokens;
+            pystring::split(line, tokens, ",");
+
+            valid = callback(tokens);
+        }
+            
+        if (valid) {
+            file.open(path + "server" + fileName + ".csv", ios_base::app);
+            file << "\n" << part.body;
+            file.close();
+        }
+
+        return handling_result_t::continue_enumeration;
+    });
+
+    if (valid) {
+        //Send response with code 200 back
+        return req->create_response()
+            .set_body("Successfully posted " + objectName + "!")
+            .done();
+    } else {
+        return req->create_response(status_conflict()).done();
+    }
+}
+
+//express server, which handles the routes
 auto server_handler() {
 	auto router = std::make_unique< router_t >();
 
@@ -70,80 +258,45 @@ auto server_handler() {
 
     //get all seilwaren
     router->http_get("/seilware", [](auto req, auto) {
-        if (!checkAuth(req)) {
-            return req->create_response(status_unauthorized()).done();
-        }
-
-		return req->create_response()
-            .set_body(restinio::sendfile(path + "serverSeil.csv"))
-            .done();
+        return on_get(req, "Seil");
 	});
 
     //post new seilware
     router->http_post("/seilware", [](auto req, auto) {
-        if (!checkAuth(req)) {
-            return req->create_response(status_unauthorized()).done();
-        }
-
-        bool valid{true};
-
-        const auto result = enumerate_parts_with_files(*req,
-            [req, &valid](part_description_t part) {
-            vector<string> lines;
-            pystring::split(string(part.body), lines, "\n");
-
-            for (string line : lines) {
-                vector<string> tokens;
-                pystring::split(line, tokens, ",");
-
-                if (tokens.size() != 7) {
-                    valid = false;
-                }
-
-                if (!(tokens[0] == "true" || tokens[0] == "false")) {
-                    valid = false;
-                }
-
-                if (!pystring::isdigit(tokens[4])) {
-                    valid = false;
-                }
-
-                if (!(tokens[5] == "Kletterseil" || 
-                    tokens[5] == "StatischesLastseil" || 
-                    tokens[5] == "Canconingseil" || 
-                    tokens[5] == "Reepschnur" || 
-                    tokens[5] == "Bandmaterial")) {
-                    valid = false;
-                }
-
-                if (!(tokens[6] == "nie" || 
-                    tokens[6] == "selten" || 
-                    tokens[6] == "gelegentlich" || 
-                    tokens[6] == "regelmäßig" || 
-                    tokens[6] == "häufig" || 
-                    tokens[6] == "ständig")) {
-                    valid = false;
-                }
-            }
-            
-            if (valid) {
-                file.open(path + "serverSeil.csv", ios_base::app);
-                file << "\n" << part.body;
-                file.close();
-            }
-
-            return handling_result_t::continue_enumeration;
-        });
-
-        if (valid) {
-            //Send response with code 200 back
-            return req->create_response()
-                .set_body("Successfully posted Seilware(n)!")
-                .done();
-        } else {
-            return req->create_response(status_conflict()).done();
-        }
+        return on_post(req, "Seil", "Seilware(n)", on_post_seil);
 	});
+
+    //get all hartwaren
+    router->http_get("/hartware", [](auto req, auto) {
+        return on_get(req, "Hart");
+	});
+
+    //post new hartwaren
+    router->http_post("/hartware", [](auto req, auto) {
+        return on_post(req, "Hart", "Hartware(n)", on_post_hart);
+	});
+
+    //get all fahrzeuge
+    router->http_get("/fahrzeug", [](auto req, auto) {
+        return on_get(req, "Fahrzeug");
+	});
+
+    //post new fahrzeuge
+    router->http_post("/fahrzeug", [](auto req, auto) {
+        return on_post(req, "Fahrzeug", "Fahrzeug(e)", on_post_fahr);
+	});
+
+    //get all immobilien
+    router->http_get("/immobilie", [](auto req, auto) {
+        return on_get(req, "Immobilie");
+	});
+    
+    //post new immobilien
+    router->http_post("/immobilie", [](auto req, auto) {
+        return on_post(req, "Immobilie", "Immobilie(n)", on_post_immobilie);
+	});
+
+    
     
     //will be called, if route doesn't match exisitng ones
 	router->non_matched_request_handler(
