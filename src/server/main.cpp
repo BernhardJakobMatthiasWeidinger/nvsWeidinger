@@ -19,7 +19,6 @@ using namespace restinio::file_upload;
 //example user: maxi:secret
 vector<string> signedUsers{};
 string path = "../src/server/csvFiles/";
-ofstream file;
 
 using router_t = router::express_router_t<>;
 
@@ -46,18 +45,18 @@ void login(request_handle_t req) {
 }
 
 //returns all lines of specific file if authorized
-auto on_get(request_handle_t req, string fileName) {
+auto on_get(request_handle_t req, string filename) {
     if (!checkAuth(req)) {
         return req->create_response(status_unauthorized()).done();
     }
 
 	return req->create_response()
-        .set_body(restinio::sendfile(path + "server" + fileName + ".csv"))
+        .set_body(restinio::sendfile(path + "server" + filename + ".csv"))
         .done();
 }
 
 //checks if tokens for Seilwaren are correct
-bool on_post_seil(vector<string> tokens) {
+bool on_post_seil(vector<string> tokens, string filename="") {
     if (tokens.size() != 7) {
         return false;
     }
@@ -91,8 +90,9 @@ bool on_post_seil(vector<string> tokens) {
 }
 
 //checks if tokens for Hartwaren are correct
-bool on_post_hart(vector<string> tokens) {
-    if (tokens.size() != 7) {
+bool on_post_hart(vector<string> tokens, string filename="") {
+    if (tokens.size() != 6) {
+        cout << "Länge: " << tokens.size() << endl;
         return false;
     }
 
@@ -104,88 +104,63 @@ bool on_post_hart(vector<string> tokens) {
         return false;
     }
 
-    if (!(tokens[5] == "Kletterseil" || 
-        tokens[5] == "StatischesLastseil" || 
-        tokens[5] == "Canconingseil" || 
-        tokens[5] == "Reepschnur" || 
-        tokens[5] == "Bandmaterial")) {
-        return false;
-    }
-
-    if (!(tokens[6] == "nie" || 
-        tokens[6] == "selten" || 
-        tokens[6] == "gelegentlich" || 
-        tokens[6] == "regelmäßig" || 
-        tokens[6] == "häufig" || 
-        tokens[6] == "ständig")) {
+    if (!(tokens[5] == "Stahlschraubkarabiner" || 
+        tokens[5] == "Aluschraubkarabiner" || 
+        tokens[5] == "HMSKarabiner" || 
+        tokens[5] == "Stahlseil" || 
+        tokens[5] == "Abseilachter" || 
+        tokens[5] == "Tuber" || 
+        tokens[5] == "Trage" || 
+        tokens[5] == "ZubehörStahlseil" || 
+        tokens[5] == "SeilwindeStahlseil" || 
+        tokens[5] == "SeilwindePerlon" || 
+        tokens[5] == "Funkgerät")) {
         return false;
     }
 
     return true;
 }
 
-//checks if tokens for Seilwaren are correct
-bool on_post_fahr(vector<string> tokens) {
-    if (tokens.size() != 7) {
+//checks if tokens for Wartungsobjekte are correct
+bool on_post_wartung(vector<string> tokens, string filename) {
+    for (string token : tokens) {
+        cout << token << endl;
+    }
+
+    if (tokens.size() != 6) {
+        cout << "Länge " << tokens.size() << endl;
         return false;
     }
 
     if (!(tokens[0] == "true" || tokens[0] == "false")) {
+        cout << 0 << endl;
         return false;
+    }
+    
+    ifstream file;
+    file.open(path + "server" + filename + ".csv");
+    if (file.fail()) {
+        cout << "file" << endl;
+        return false;
+    }
+
+    string line{};
+    while (getline(file, line)) {
+        std::stringstream ss(line);
+        string token{};
+        int cnt{};
+
+        while (getline(ss, token, ':')) {
+            if (cnt == 3) {
+                if (token == tokens[3]) {
+                    return false;
+                }
+            }
+        }
     }
 
     if (!pystring::isdigit(tokens[4])) {
-        return false;
-    }
-
-    if (!(tokens[5] == "Kletterseil" || 
-        tokens[5] == "StatischesLastseil" || 
-        tokens[5] == "Canconingseil" || 
-        tokens[5] == "Reepschnur" || 
-        tokens[5] == "Bandmaterial")) {
-        return false;
-    }
-
-    if (!(tokens[6] == "nie" || 
-        tokens[6] == "selten" || 
-        tokens[6] == "gelegentlich" || 
-        tokens[6] == "regelmäßig" || 
-        tokens[6] == "häufig" || 
-        tokens[6] == "ständig")) {
-        return false;
-    }
-
-    return true;
-}
-
-//checks if tokens for Seilwaren are correct
-bool on_post_immobilie(vector<string> tokens) {
-    if (tokens.size() != 7) {
-        return false;
-    }
-
-    if (!(tokens[0] == "true" || tokens[0] == "false")) {
-        return false;
-    }
-
-    if (!pystring::isdigit(tokens[4])) {
-        return false;
-    }
-
-    if (!(tokens[5] == "Kletterseil" || 
-        tokens[5] == "StatischesLastseil" || 
-        tokens[5] == "Canconingseil" || 
-        tokens[5] == "Reepschnur" || 
-        tokens[5] == "Bandmaterial")) {
-        return false;
-    }
-
-    if (!(tokens[6] == "nie" || 
-        tokens[6] == "selten" || 
-        tokens[6] == "gelegentlich" || 
-        tokens[6] == "regelmäßig" || 
-        tokens[6] == "häufig" || 
-        tokens[6] == "ständig")) {
+        cout << 4 << endl;
         return false;
     }
 
@@ -193,8 +168,8 @@ bool on_post_immobilie(vector<string> tokens) {
 }
 
 //appends all lines from client file to server file if callback returns true
-auto on_post(request_handle_t req, string fileName, string objectName,
-             function<bool(vector<string>)> callback) {
+auto on_post(request_handle_t req, string filename, string objectName,
+             function<bool(vector<string>, string)> callback) {
     if (!checkAuth(req)) {
         return req->create_response(status_unauthorized()).done();
     }
@@ -210,11 +185,12 @@ auto on_post(request_handle_t req, string fileName, string objectName,
             vector<string> tokens;
             pystring::split(line, tokens, ",");
 
-            valid = callback(tokens);
+            valid = callback(tokens, filename);
         }
             
         if (valid) {
-            file.open(path + "server" + fileName + ".csv", ios_base::app);
+            ofstream file;
+            file.open(path + "server" + filename + ".csv", ios_base::app);
             file << "\n" << part.body;
             file.close();
         }
@@ -278,12 +254,12 @@ auto server_handler() {
 
     //get all fahrzeuge
     router->http_get("/fahrzeug", [](auto req, auto) {
-        return on_get(req, "Fahrzeug");
+        return on_get(req, "Fahr");
 	});
 
     //post new fahrzeuge
     router->http_post("/fahrzeug", [](auto req, auto) {
-        return on_post(req, "Fahrzeug", "Fahrzeug(e)", on_post_fahr);
+        return on_post(req, "Fahr", "Fahrzeug(e)", on_post_wartung);
 	});
 
     //get all immobilien
@@ -293,7 +269,7 @@ auto server_handler() {
     
     //post new immobilien
     router->http_post("/immobilie", [](auto req, auto) {
-        return on_post(req, "Immobilie", "Immobilie(n)", on_post_immobilie);
+        return on_post(req, "Immobilie", "Immobilie(n)", on_post_wartung);
 	});
 
     
