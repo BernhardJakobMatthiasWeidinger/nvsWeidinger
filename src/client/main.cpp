@@ -10,16 +10,21 @@ using namespace std;
 
 void processResponse(cpr::Response r, string encAuth="") {
     if (r.status_code == 200) {
-        spdlog::info(r.text);
+        spdlog::info("Successfull Request");
+
+        //print the lines of the server File
+        cout << r.text << endl;
     } else if (r.status_code == 401) {
         spdlog::warn("Not authorized, redirect to /login");
 
-        r = cpr::Get(cpr::Url{"localhost:1234/login"},
+        cpr::Response loginR = cpr::Get(cpr::Url{"localhost:1234/login"},
             cpr::Header{{"Authorization", "Basic:" + encAuth}});
 
-        processResponse(r, encAuth);
+        processResponse(loginR, encAuth);
     } else if (r.status_code == 404) {
         spdlog::error("Resource / not found");
+    } else if (r.status_code == 409) {
+        spdlog::error("Given file has errors (too many or incorrect values)");
     } else if (r.status_code == 0) {
         spdlog::error("Something that shouldn't have happend has happend!");
     } else {
@@ -85,8 +90,6 @@ int main(int argc, char* argv[]) {
         } else {
             url = "/seilware";
         }
-
-        cout << file << endl;
 
         auto r = cpr::Post(cpr::Url{"localhost:1234" + url},
                            cpr::Multipart{{"File", cpr::File{file}}},

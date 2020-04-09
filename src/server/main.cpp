@@ -13,17 +13,16 @@
 
 using namespace std;
 using namespace restinio;
+using namespace restinio::file_upload;
 
 //vector of already logged in users, 
 //example user: maxi:secret
 vector<string> signedUsers{};
-
-vector<Seilware> seilwaren{};
-vector<Hartware> hartwaren{};
-vector<Fahrzeug> fehrzeuge{};
-vector<Immobilie> immobilien{};
+string path = "../src/server/";
+ofstream file;
 
 using router_t = router::express_router_t<>;
+
 
 //checks, if user is already logged in
 bool checkAuth(request_handle_t req) {
@@ -44,63 +43,6 @@ void login(request_handle_t req) {
     while (std::getline(ss, token, ':')) {}
 
     signedUsers.push_back(token);
-}
-
-auto on_post(const restinio::request_handle_t & req) {
-   using namespace restinio::file_upload;
-
-    const auto result = enumerate_parts_with_files(*req,
-        [](part_description_t part) {
-        cout << part.body << endl; 
-        //true,benutzt,2000-12-12,Altes Seil,10,Kletterseil,ständig
-
-        
-        bool valid{true};
-        vector<string> lines;
-        pystring::split(string(part.body), lines, "\n");
-
-        for (string line : lines) {
-            vector<string> tokens;
-            pystring::split(line, tokens, ",");
-
-            if (!(tokens[0] == "true" || tokens[0] == "false")) {
-                valid = false;
-            }
-
-            if (!pystring::isdigit(tokens[4])) {
-                valid = false;
-            }
-
-            if (!(tokens[5] == "Kletterseil" || 
-                tokens[5] == "StatischesLastseil" || 
-                tokens[5] == "Canconingseil" || 
-                tokens[5] == "Reepschnur" || 
-                tokens[5] == "Bandmaterial")) {
-                valid = false;
-            }
-
-            if (!(tokens[6] == "nie" || 
-                tokens[6] == "selten" || 
-                tokens[6] == "gelegentlich" || 
-                tokens[6] == "regelmäßig" || 
-                tokens[6] == "häufig" || 
-                tokens[6] == "ständig")) {
-                valid = false;
-            }
-
-            if (!valid) {
-                cout << "BAAAAAAAD" << endl;
-            }
-        }
-        
-        return handling_result_t::continue_enumeration;
-      });
-    /*if (result) {
-        cout << "result" << endl;
-    } else {
-        cout << "bad" << endl;
-    }
-    return restinio::request_accepted();*/
 }
 
 auto server_handler() {
@@ -133,7 +75,7 @@ auto server_handler() {
         }
 
 		return req->create_response()
-            .set_body(seilwaren)
+            .set_body(restinio::sendfile(path + "serverSeil.csv"))
             .done();
 	});
 
@@ -145,18 +87,18 @@ auto server_handler() {
 
         bool valid{true};
 
-        using namespace restinio::file_upload;
-
         const auto result = enumerate_parts_with_files(*req,
             [req, &valid](part_description_t part) {
-            cout << part.body << endl; 
-            
             vector<string> lines;
             pystring::split(string(part.body), lines, "\n");
 
             for (string line : lines) {
                 vector<string> tokens;
                 pystring::split(line, tokens, ",");
+
+                if (tokens.size() != 7) {
+                    valid = false;
+                }
 
                 if (!(tokens[0] == "true" || tokens[0] == "false")) {
                     valid = false;
@@ -184,17 +126,23 @@ auto server_handler() {
                 }
             }
             
+            if (valid) {
+                file.open(path + "serverSeil.csv", ios_base::app);
+                file << "\n" << part.body;
+                file.close();
+            }
+
             return handling_result_t::continue_enumeration;
         });
 
         if (valid) {
+            //Send response with code 200 back
             return req->create_response()
                 .set_body("Successfully posted Seilware(n)!")
                 .done();
         } else {
             return req->create_response(status_conflict()).done();
         }
-
 	});
     
     //will be called, if route doesn't match exisitng ones
