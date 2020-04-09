@@ -10,19 +10,18 @@ using namespace std;
 
 void processResponse(cpr::Response r, string encAuth="") {
     if (r.status_code == 200) {
-        spdlog::info("Successful Request");
-        cout << r.text << endl;
+        spdlog::info(r.text);
     } else if (r.status_code == 401) {
         spdlog::warn("Not authorized, redirect to /login");
 
-        r = cpr::Get(cpr::Url{"localhost:8080/login"},
+        r = cpr::Get(cpr::Url{"localhost:1234/login"},
             cpr::Header{{"Authorization", "Basic:" + encAuth}});
 
         processResponse(r, encAuth);
     } else if (r.status_code == 404) {
         spdlog::error("Resource / not found");
     } else if (r.status_code == 0) {
-        spdlog::error("Server not reachable");
+        spdlog::error("Something that shouldn't have happend has happend!");
     } else {
         spdlog::error("Request failed with code: " + to_string(r.status_code));
     }
@@ -34,9 +33,12 @@ int main(int argc, char* argv[]) {
     //Credentials
     string username{};
     string password{};
-
     app.add_option("--username", username, "Username to log in")->required();
     app.add_option("--password", password, "Password to log in")->required();
+
+    //File for post requests
+    string file{"../src/client/clientSeil.csv"};
+    app.add_option("--file", file, "File, which will be processed at the server");
 
     //Method, which will be used
     app.add_option_group("method", "HTTP Methode")->require_option(-1);
@@ -68,35 +70,45 @@ int main(int argc, char* argv[]) {
     CLI11_PARSE(app, argc, argv);
 
     string url{""};
-    string encAuth{""};
+    
+    string auth{username + ':' + password};
+    string encAuth = base64_encode(reinterpret_cast<const unsigned char*>(
+        auth.c_str()), auth.length());
 
-    if (g_flag) {
-        if (s_flag) {
-            url = "/seilware";
-        } else if (h_flag) {
+    if (p_flag) {
+        if (h_flag) {
             url = "/hartware";
         } else if (f_flag) {
             url = "/fahrzeug";
         } else if (i_flag) {
             url = "/immobilie";
         } else {
-            spdlog::error("Invalid object chosen");
-            exit(1);
+            url = "/seilware";
         }
 
-        const string auth{username + ':' + password};
+        cout << file << endl;
 
-        string encAuth = base64_encode(reinterpret_cast<const unsigned char*>(
-            auth.c_str()), auth.length());
+        auto r = cpr::Post(cpr::Url{"localhost:1234" + url},
+                           cpr::Multipart{{"File", cpr::File{file}}},
+                           cpr::Header{{"Authorization", "Basic:" + encAuth}});
 
-        auto r = cpr::Get(cpr::Url{"localhost:8080" + url},
+        spdlog::info("User called POST " + url);
+        processResponse(r, encAuth);
+    } else {
+        if (h_flag) {
+            url = "/hartware";
+        } else if (f_flag) {
+            url = "/fahrzeug";
+        } else if (i_flag) {
+            url = "/immobilie";
+        } else {
+            url = "/seilware";
+        }
+
+        auto r = cpr::Get(cpr::Url{"localhost:1234" + url},
                  cpr::Header{{"Authorization", "Basic:" + encAuth}});
 
         spdlog::info("User called GET " + url);
         processResponse(r, encAuth);
-    } else if (p_flag) {
-        //POST SHIT
-    } else {
-        spdlog::error("Invalid method chosen");
-    }
+    } 
 }

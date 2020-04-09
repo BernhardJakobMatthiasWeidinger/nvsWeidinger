@@ -18,7 +18,7 @@ lib_cpr = cc.find_library('cpr', dirs: ['/home/bernhard/Desktop/vorgabe/software
 
 
 srcClient = ['src/client/main.cpp', 'src/base64.cpp']
-srcServer = ['src/server/main.cpp', 'src/base64.cpp'] 
+srcServer = ['src/server/main.cpp', 'src/base64.cpp', 'src/pystring.cpp'] 
 
 thread_dep = dependency('threads')
 

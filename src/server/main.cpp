@@ -1,8 +1,12 @@
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
 #include "base64.h"
+#include "pystring.h"
 #include "restinio/all.hpp"
+#include <restinio/helpers/multipart_body.hpp>
+#include <restinio/helpers/file_upload.hpp>
 //#include "restinio/tls.hpp"
 
 #include "materialverwaltung.h"
@@ -13,7 +17,6 @@ using namespace restinio;
 //vector of already logged in users, 
 //example user: maxi:secret
 vector<string> signedUsers{};
-
 
 vector<Seilware> seilwaren{};
 vector<Hartware> hartwaren{};
@@ -41,6 +44,63 @@ void login(request_handle_t req) {
     while (std::getline(ss, token, ':')) {}
 
     signedUsers.push_back(token);
+}
+
+auto on_post(const restinio::request_handle_t & req) {
+   using namespace restinio::file_upload;
+
+    const auto result = enumerate_parts_with_files(*req,
+        [](part_description_t part) {
+        cout << part.body << endl; 
+        //true,benutzt,2000-12-12,Altes Seil,10,Kletterseil,ständig
+
+        
+        bool valid{true};
+        vector<string> lines;
+        pystring::split(string(part.body), lines, "\n");
+
+        for (string line : lines) {
+            vector<string> tokens;
+            pystring::split(line, tokens, ",");
+
+            if (!(tokens[0] == "true" || tokens[0] == "false")) {
+                valid = false;
+            }
+
+            if (!pystring::isdigit(tokens[4])) {
+                valid = false;
+            }
+
+            if (!(tokens[5] == "Kletterseil" || 
+                tokens[5] == "StatischesLastseil" || 
+                tokens[5] == "Canconingseil" || 
+                tokens[5] == "Reepschnur" || 
+                tokens[5] == "Bandmaterial")) {
+                valid = false;
+            }
+
+            if (!(tokens[6] == "nie" || 
+                tokens[6] == "selten" || 
+                tokens[6] == "gelegentlich" || 
+                tokens[6] == "regelmäßig" || 
+                tokens[6] == "häufig" || 
+                tokens[6] == "ständig")) {
+                valid = false;
+            }
+
+            if (!valid) {
+                cout << "BAAAAAAAD" << endl;
+            }
+        }
+        
+        return handling_result_t::continue_enumeration;
+      });
+    /*if (result) {
+        cout << "result" << endl;
+    } else {
+        cout << "bad" << endl;
+    }
+    return restinio::request_accepted();*/
 }
 
 auto server_handler() {
@@ -83,9 +143,58 @@ auto server_handler() {
             return req->create_response(status_unauthorized()).done();
         }
 
-		return req->create_response()
-            .set_body("Successfully signed in!")
-            .done();
+        bool valid{true};
+
+        using namespace restinio::file_upload;
+
+        const auto result = enumerate_parts_with_files(*req,
+            [req, &valid](part_description_t part) {
+            cout << part.body << endl; 
+            
+            vector<string> lines;
+            pystring::split(string(part.body), lines, "\n");
+
+            for (string line : lines) {
+                vector<string> tokens;
+                pystring::split(line, tokens, ",");
+
+                if (!(tokens[0] == "true" || tokens[0] == "false")) {
+                    valid = false;
+                }
+
+                if (!pystring::isdigit(tokens[4])) {
+                    valid = false;
+                }
+
+                if (!(tokens[5] == "Kletterseil" || 
+                    tokens[5] == "StatischesLastseil" || 
+                    tokens[5] == "Canconingseil" || 
+                    tokens[5] == "Reepschnur" || 
+                    tokens[5] == "Bandmaterial")) {
+                    valid = false;
+                }
+
+                if (!(tokens[6] == "nie" || 
+                    tokens[6] == "selten" || 
+                    tokens[6] == "gelegentlich" || 
+                    tokens[6] == "regelmäßig" || 
+                    tokens[6] == "häufig" || 
+                    tokens[6] == "ständig")) {
+                    valid = false;
+                }
+            }
+            
+            return handling_result_t::continue_enumeration;
+        });
+
+        if (valid) {
+            return req->create_response()
+                .set_body("Successfully posted Seilware(n)!")
+                .done();
+        } else {
+            return req->create_response(status_conflict()).done();
+        }
+
 	});
     
     //will be called, if route doesn't match exisitng ones
@@ -125,7 +234,7 @@ int main() {
         tls_context.use_tmp_dh_file( certs_dir + "/dh2048.pem" );*/
 
         run(on_this_thread<traits_t>()
-            .port(8080).address("localhost")
+            .port(1234).address("localhost")
             .request_handler(server_handler()));
             //.tls_context( std::move(tls_context)));
             //.request_handler(handler));
