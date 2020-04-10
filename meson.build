@@ -11,10 +11,10 @@ inc_dir = include_directories(['include',
                                get_option('asio_include_dir'),
                                '../libs/cpr/include/',
                                '../libs/http-parser/',
-                               '../libs/restinio/dev/'])
+                               '../libs/restinio/'])
 
 cc = meson.get_compiler('cpp')
-lib_fmt = cc.find_library('fmt', dirs: ['/home/bernhard/Desktop/test/nvsWeidinger/libs/fmt-6.1.2/build/'])
+lib_fmt = cc.find_library('fmt', dirs: ['/home/bernhard/Desktop/test/fmt-6.1.2/build/'])
 lib_http_parser = cc.find_library('http_parser', dirs: ['/home/bernhard/Desktop/test/nvsWeidinger/libs/http-parser/build/'])
 lib_curl = cc.find_library('curl', dirs: ['/home/bernhard/Desktop/test/nvsWeidinger/libs/cpr/build/lib'])
 lib_cpr = cc.find_library('cpr', dirs: ['/home/bernhard/Desktop/test/nvsWeidinger/libs/cpr/build/lib'])

@@ -1,0 +1,15 @@
+add_subdirectory(method)
+add_subdirectory(echo_body)
+add_subdirectory(timeouts)
+add_subdirectory(throw_exception)
+add_subdirectory(slow_transmit)
+add_subdirectory(user_controlled_output)
+add_subdirectory(chunked_output)
+add_subdirectory(output_and_buffers)
+add_subdirectory(notificators)
+add_subdirectory(remote_endpoint)
+add_subdirectory(connection_state)
+add_subdirectory(ip_blocker)
+
+add_subdirectory(upgrade)
+
