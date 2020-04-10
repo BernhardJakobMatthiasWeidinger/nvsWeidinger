@@ -4,20 +4,20 @@ project('05_uml_2_restino', 'cpp',
 add_global_arguments('-lssl', language: 'cpp')
 add_global_arguments('-lcrypto', language: 'cpp')
 
-inc_dir = include_directories([get_option('include_dir'),
+inc_dir = include_directories(['include',
                                get_option('cli11_include_dir'),
-                               get_option('spdlog_include_dir'),
-                               get_option('cpr_include_dir'),
-                               get_option('asio_include_dir'),
                                get_option('fmt_include_dir'),
-                               get_option('http_parser_dir'),
-                               get_option('restinio_include_dir')])
+                               get_option('spdlog_include_dir'),
+                               get_option('asio_include_dir'),
+                               '../libs/cpr/include/',
+                               '../libs/http-parser/',
+                               '../libs/restinio/dev/'])
 
 cc = meson.get_compiler('cpp')
-lib_fmt = cc.find_library('fmt', dirs: ['/home/bernhard/Desktop/vorgabe/software/fmt-6.1.2/build/'])
-lib_http_parser = cc.find_library('http_parser', dirs: ['/home/bernhard/Desktop/http-parser/build/'])
-lib_curl = cc.find_library('curl', dirs: ['/home/bernhard/Desktop/vorgabe/software/cpr/build/lib'])
-lib_cpr = cc.find_library('cpr', dirs: ['/home/bernhard/Desktop/vorgabe/software/cpr/build/lib'])
+lib_fmt = cc.find_library('fmt', dirs: ['/home/bernhard/Desktop/test/nvsWeidinger/libs/fmt-6.1.2/build/'])
+lib_http_parser = cc.find_library('http_parser', dirs: ['/home/bernhard/Desktop/test/nvsWeidinger/libs/http-parser/build/'])
+lib_curl = cc.find_library('curl', dirs: ['/home/bernhard/Desktop/test/nvsWeidinger/libs/cpr/build/lib'])
+lib_cpr = cc.find_library('cpr', dirs: ['/home/bernhard/Desktop/test/nvsWeidinger/libs/cpr/build/lib'])
 
 
 srcClient = ['src/client/main.cpp', 'src/base64.cpp']
