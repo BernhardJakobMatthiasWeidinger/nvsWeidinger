@@ -98,9 +98,10 @@ int main(int argc, char* argv[]) {
             url += "/" + to_string(cnt);
         }
 
-        auto r = cpr::Post(cpr::Url{"localhost:1234" + url},
+        auto r = cpr::Post(cpr::Url{"https://localhost:1234" + url},
                            cpr::Multipart{{"File", cpr::File{file}}},
-                           cpr::Header{{"Authorization", "Basic:" + encAuth}});
+                           cpr::Header{{"Authorization", "Basic:" + encAuth}, 
+                           {"Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"}});
 
         spdlog::info("User called POST " + url);
         processResponse(r, encAuth);
@@ -115,7 +116,7 @@ int main(int argc, char* argv[]) {
             url = "/seilware";
         }
 
-        auto r = cpr::Get(cpr::Url{"localhost:1234" + url},
+        auto r = cpr::Get(cpr::Url{"https://localhost:1234" + url},
                  cpr::Header{{"Authorization", "Basic:" + encAuth}});
 
         spdlog::info("User called GET " + url);

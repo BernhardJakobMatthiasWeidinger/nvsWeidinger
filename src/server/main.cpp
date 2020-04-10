@@ -25,6 +25,10 @@ using router_t = router::express_router_t<>;
 
 //checks, if user is already logged in
 bool checkAuth(request_handle_t req) {
+    if (!(req->header().has_field("Authorization"))) {
+        return false;
+    }
+
     std::stringstream ss(req->header().get_field("Authorization"));
     std::string token;
     while (std::getline(ss, token, ':')) {}
@@ -310,7 +314,7 @@ auto server_handler() {
 int main() {
     try {
         using traits_t =
-			restinio::single_thread_tls_traits_t<
+			restinio::tls_traits_t<
             //restinio::traits_t<
 				asio_timer_manager_t,
 				single_threaded_ostream_logger_t,
@@ -322,17 +326,20 @@ int main() {
         asio::ssl::context::no_sslv2 |
         asio::ssl::context::single_dh_use );
 
-        string certs_dir{"."};
+        string certs_dir{"../src/server/certs"};
 
-        tls_context.use_certificate_chain_file( certs_dir + "/server.pem" );
+        tls_context.use_certificate_chain_file(certs_dir + "/server.pem" );
         tls_context.use_private_key_file(
             certs_dir + "/key.pem",
             asio::ssl::context::pem );
-        tls_context.use_tmp_dh_file( certs_dir + "/dh2048.pem" );
+        tls_context.use_tmp_dh_file(certs_dir + "/dh2048.pem" );
 
         run(on_this_thread<traits_t>()
             .port(1234).address("localhost")
             .request_handler(server_handler())
+            .read_next_http_message_timelimit( 10s )
+				.write_http_response_timelimit( 1s )
+				.handle_request_timeout( 1s )
             .tls_context( std::move(tls_context)));
     } catch( const std::exception & ex ) {
 		cerr << "Error: " << ex.what() << endl;
