@@ -1,8 +1,0 @@
-\babel@toc {ngerman}{}
-\contentsline {section}{\numberline {1}Restinio}{2}% 
-\contentsline {subsection}{\numberline {1.1}Express}{2}% 
-\contentsline {subsection}{\numberline {1.2}Header und Query Parameter}{2}% 
-\contentsline {subsection}{\numberline {1.3}Senden von Dateien}{2}% 
-\contentsline {subsubsection}{\numberline {1.3.1}Client zu Server}{2}% 
-\contentsline {subsubsection}{\numberline {1.3.2}Server zu Client}{2}% 
-\contentsline {subsection}{\numberline {1.4}TLS}{2}% 

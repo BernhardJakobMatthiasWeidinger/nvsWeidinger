@@ -1,27 +1,111 @@
-\documentclass[10pt]{article}
+\documentclass[german,oneside,color]{htldipl}
 
-\usepackage[ngerman]{babel}
-\usepackage{graphicx}
-\title{\textbf{Weidinger Restinio Projekt}}
-\author{Bernhard Weidinger}
-\date{10. April 2020}
+\include{Settings}
+
 \begin{document}
+\title{RESTinio}
 
-\maketitle
-\newpage
+\chapter{RESTinio}
+RESTinio ist eine header-only Bibliothek, mit dem man REST - APIs schnell und einfach entwickeln kann und ebenso um Requests asynchron verarbeiten zu können.
+\\ \\
+Um RESTinio verwenden zu können, muss man neben RESTinio auch die Bibliotheken asio, http\_parser und fmt inkludieren, da RESTinio diese verwendet.
 
-\section{Restinio}
-\subsection{Express}
+\section{Express}
+Mithilfe dieser Bibliothek kann man Server wie node.js Express Server entwickeln. 
+
+\subsection{main}
+Um einen Express Server zu starten, muss die main Funktion wie folgt aussehen:
+\begin{program}[H]
+\begin{JavaCode}
+int main() {
+    using router_t = restinio::router::express_router_t<>;
+    try {
+        using traits_t =
+            restinio::traits_t<
+                asio_timer_manager_t,
+                single_threaded_ostream_logger_t,
+                router_t >;
+				
+        restinio::run(
+            restinio::on_this_thread<traits_t>()
+            .port(8080)
+            .address("localhost")
+            .request_handler(server_handler()));
+    } catch( const std::exception & ex ) {
+        cerr << "Error: " << ex.what() << endl;
+        return 1;
+    }
+}
+\end{JavaCode}
+\end{program}
+In main muss die Funktion \textbf{restinio::run} aufgerufen werden, welche die Funktion \textbf{restinio::on\_this\_thread} erwartet. Diese Funktion erwartet zumindest 3 Parameter: den Port (8080), die Adresse (localhost) und den Request Handler, welcher alle eingehenden Request verarbeitet (server\_handler()). 
+\\ \\
+Bei Express Server benötigt man zusätzlich noch Traits, das wichtigste Trait wäre dabei \textbf{express\_router\_t}, mit diesem gibt man an, dass es sich um einen Express Router handelt.
+
+\subsection{server\_handler()}
+Damit der Server weiß, welche Request man wie verarbeiten muss, definiert man einen Request Handler, dieser könnte wie folgt aussehen:
+\begin{program}[H]
+\begin{JavaCode}
+auto server_handler() {
+    auto router = std::make_unique< router_t >();
+
+    //GET request for route /
+    router->http_get("/", [](auto req, auto) {
+        return req->create_response()
+            .set_body("Hello World")
+            .done();
+    });
+    
+    //will be called, if route doesn't match exisitng ones
+    router->non_matched_request_handler(
+        []( auto req ){
+            return
+                req->create_response(status_not_found())
+                    .append_header_date_field()
+                    .connection_close() 
+                    .done();
+        });
+    return router;
+}
+\end{JavaCode}
+\end{program}
+
+In dieser Funktion muss man eine Variable \textbf{router} definieren, mit dieser kann man weitere Handler definieren. Diese Handler bearbeiten den jeweiligen Request und schicken einen entsprechenden Response zurück.
+\\ \\
+In diesem Beispiel wurde nur ein Handler für einen GET Request auf / definiert. Wenn dieser aufgerufen wird, dann wird ein Response mithilfe der Funktion \textbf{create\_response()} erstellt, der Body dieses Response wird auf "Hello World"  gesetzt und anschließend wird dieser an den Client gesendet.
+\\ \\
+Falls aber ein Request auf eine undefinierte Route erstellt wird, werden diese in der Funktion \textbf{non\_matched\_request\_handler} bearbeitet. In dem Beispiel wird einfach nur der Status-Code "404 Not Found" gesetzt und die Verbindung geschlossen.
 
 \subsection{Header und Query Parameter}
+Bei Requests gibt es 2 Arten von Parametern: Header und Query Parameter. 
+\\ \\
+\textbf{Header Parameter} werden im Request Header mitgeschickt. Mit den Methoden get\_field(string headername) und has\_field(string headername) kann man auf seinen Wert zugreifen und man kann überprüfen, ob dieser existiert.
+\\
+\textbf{Query Parameter} werden in der URL mitgeschickt. Diese werden mit einem Doppelpunkt nach einem / gekennzeichnet und man kann auf sie mit dem Funktionsparameter params["parametername"] zugreifen.
+\\ \\
+Im folgenden Beispiel werden beide Arten von Parametern verwendet. Wenn der User über einen Authorization Header verfügt, sendet der Server einen Request mit seinem Wert und mit dem Parameter Wert zurück, wenn nicht, sendet der Server den Status-Code "401 Unauthorized" zurück:
+\begin{program}[H]
+\begin{JavaCode}
+router->http_get("/single/:name", [](auto req, auto params ){
+    if (req->header().has_field("Authorization")) {
+        string auth{req->header().get_field("Authorization")};    
+    
+        return init_resp(req->create_response())
+               .set_body(auth + "," + params["name"])
+               .done();
+    } else {
+         return req->create_response(status_unauthorized()).done();
+    }
+});
+\end{JavaCode}
+\end{program}
 
-\subsection{Senden von Dateien}
-\subsubsection{Client zu Server}
 
-\subsubsection{Server zu Client}
+\section{Senden von Dateien}
+\subsection{Client zu Server}
 
-\subsection{TLS}
+\subsection{Server zu Client}
 
-
+\section{TLS}
 
 \end{document}
