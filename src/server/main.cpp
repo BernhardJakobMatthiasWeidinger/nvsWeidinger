@@ -217,24 +217,11 @@ auto on_post(request_handle_t req, string filename, string objectName,
 auto server_handler() {
 	auto router = std::make_unique< router_t >();
 
-	//GET request for Homepage
-	router->http_get("/", [](auto req, auto) {
-        if (!checkAuth(req)) {
-            return req->create_response(status_unauthorized()).done();
-        }
-
-		return req->create_response()
-            .set_body("Successfully signed in!")
-            .done();
-	});
-
     //GET request for Homepage
 	router->http_get("/login", [](auto req, auto) {
         login(req);
 
-		return req->create_response()
-            .set_body("Successfully logged in!")
-            .done();
+		return req->create_response().done();
 	});
 
     //get all seilwaren

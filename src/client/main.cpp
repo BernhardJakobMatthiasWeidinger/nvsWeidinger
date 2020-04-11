@@ -8,12 +8,38 @@
 
 using namespace std;
 
+string file{"../src/client/csvFiles/clientSeil.csv"};
+string url{""};
+bool p_flag{};
+
 void processResponse(cpr::Response r, string encAuth="") {
     if (r.status_code == 200) {
-        spdlog::info("Successfull Request");
+        //if user called login
+        if (r.url.find("/login") != string::npos) {
+            spdlog::info("Successfully logged in");
 
-        //print the lines of the server File
-        cout << r.text << endl;
+            cpr::Session session;
+            session.SetVerifySsl(false);
+            session.SetOption(cpr::Url{"https://localhost:1234" + url});
+            session.SetOption(cpr::Header{{"Authorization", "Basic:" + encAuth}});
+
+            //if user called a POST request
+            if (p_flag) {
+                session.SetOption(cpr::Multipart{{"File", cpr::File{file}}});
+                processResponse(session.Post(), encAuth);
+            } else {
+                processResponse(session.Get(), encAuth);
+            }
+        } else {
+            //if user called a GET request
+            if (r.text.find(",") != string::npos) {
+                spdlog::info("Successfully received lines from server");
+                //print the lines of the server File
+                cout << r.text << endl;
+            } else {
+                spdlog::info(r.text);
+            }
+        }
     } else if (r.status_code == 401) {
         spdlog::warn("Not authorized, redirect to /login");
 
@@ -28,7 +54,7 @@ void processResponse(cpr::Response r, string encAuth="") {
     } else if (r.status_code == 409) {
         spdlog::error("Given file has errors (too many or incorrect values)");
     } else if (r.status_code == 0) {
-        spdlog::error("Something that shouldn't have happend has happend!");
+        spdlog::error("Unknown error: (status_code = 0)!");
     } else {
         spdlog::error("Request failed with code: " + to_string(r.status_code));
     }
@@ -44,7 +70,6 @@ int main(int argc, char* argv[]) {
     app.add_option("--password", password, "Password to log in")->required();
 
     //File for post requests
-    string file{"../src/client/csvFiles/clientSeil.csv"};
     app.add_option("--file", file, "File, which will be processed at the server");
 
     //Method, which will be used
@@ -53,7 +78,6 @@ int main(int argc, char* argv[]) {
     bool g_flag{};
     app.get_option_group("method")
         ->add_flag("-g,--get", g_flag, "Use GET method (default)");
-    bool p_flag{};
     app.get_option_group("method")
         ->add_flag("-p,--post", p_flag, "Use POST method");
 
@@ -78,8 +102,6 @@ int main(int argc, char* argv[]) {
     app.add_option("--cnt", cnt, "Count of Inventarobjekte (default = all)");
 
     CLI11_PARSE(app, argc, argv);
-
-    string url{""};
     
     string auth{username + ':' + password};
     string encAuth = base64_encode(reinterpret_cast<const unsigned char*>(
@@ -87,7 +109,6 @@ int main(int argc, char* argv[]) {
 
     cpr::Session session;
     session.SetVerifySsl(false);
-    session.SetOption(cpr::Multipart{{"File", cpr::File{file}}});
     session.SetOption(cpr::Header{{"Authorization", "Basic:" + encAuth}});
 
     if (p_flag) {
@@ -105,10 +126,10 @@ int main(int argc, char* argv[]) {
             url += "/" + to_string(cnt);
         }
 
+        spdlog::info("User called POST " + url);
+        session.SetOption(cpr::Multipart{{"File", cpr::File{file}}});
         session.SetOption(cpr::Url{"https://localhost:1234" + url});
         auto r = session.Post();
-
-        spdlog::info("User called POST " + url);
         processResponse(r, encAuth);
     } else {
         if (h_flag) {
@@ -121,10 +142,9 @@ int main(int argc, char* argv[]) {
             url = "/seilware";
         }
 
+        spdlog::info("User called GET " + url);
         session.SetOption(cpr::Url{"https://localhost:1234" + url});
         auto r = session.Get();
-
-        spdlog::info("User called GET " + url);
         processResponse(r, encAuth);
     } 
 }
