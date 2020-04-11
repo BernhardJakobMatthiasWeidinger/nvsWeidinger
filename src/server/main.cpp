@@ -14,14 +14,12 @@
 using namespace std;
 using namespace restinio;
 using namespace restinio::file_upload;
-
-//vector of already logged in users, 
-//example user: maxi:secret
-vector<string> signedUsers{};
-string path = "../src/server/csvFiles/";
-
 using router_t = router::express_router_t<>;
 
+//vector of already logged in users, 
+vector<string> signedUsers{};
+//path, where all server files are located 
+string path = "../src/server/csvFiles/";
 
 //checks, if user is already logged in
 bool checkAuth(request_handle_t req) {
@@ -39,7 +37,7 @@ bool checkAuth(request_handle_t req) {
     return true; 
 }
 
-//appends the user to the already logged in users
+//appends the user to the vector of logged in users
 void login(request_handle_t req) {
     std::stringstream ss(req->header().get_field("Authorization"));
     std::string token;
@@ -48,7 +46,7 @@ void login(request_handle_t req) {
     signedUsers.push_back(token);
 }
 
-//returns all lines of specific file if authorized
+//returns all lines of specified file if authorized
 auto on_get(request_handle_t req, string filename) {
     if (!checkAuth(req)) {
         return req->create_response(status_unauthorized()).done();
@@ -59,7 +57,7 @@ auto on_get(request_handle_t req, string filename) {
         .done();
 }
 
-//checks if tokens for Seilwaren are correct
+//checks if file for posted Seilwaren are correct
 bool on_post_seil(vector<string> tokens, string filename="") {
     if (tokens.size() != 7) {
         return false;
@@ -75,7 +73,7 @@ bool on_post_seil(vector<string> tokens, string filename="") {
 
     if (!(tokens[5] == "Kletterseil" || 
         tokens[5] == "StatischesLastseil" || 
-        tokens[5] == "Canconingseil" || 
+        tokens[5] == "Canyoningseil" || 
         tokens[5] == "Reepschnur" || 
         tokens[5] == "Bandmaterial")) {
         return false;
@@ -94,7 +92,7 @@ bool on_post_seil(vector<string> tokens, string filename="") {
     return true;
 }
 
-//checks if tokens for Hartwaren are correct
+//checks if file for posted Hartwaren are correct
 bool on_post_hart(vector<string> tokens, string filename="") {
     if (tokens.size() != 6) {
         return false;
@@ -125,7 +123,7 @@ bool on_post_hart(vector<string> tokens, string filename="") {
     return true;
 }
 
-//checks if tokens for Wartungsobjekte are correct
+//checks if file for posted Wartungsobjekte are correct
 bool on_post_wartung(vector<string> tokens, string filename) {
     if (tokens.size() != 6) {
         return false;
@@ -174,6 +172,7 @@ auto on_post(request_handle_t req, string filename, string objectName,
     bool valid{true};
     vector<string> lines;
 
+    //checks are receives lines from client
     const auto result = enumerate_parts_with_files(*req,
         [&](part_description_t part) {
         pystring::split(string(part.body), lines, "\n");
@@ -192,12 +191,13 @@ auto on_post(request_handle_t req, string filename, string objectName,
         return handling_result_t::continue_enumeration;
     });
 
+    //if client file is valid add to server
     if (valid) {
         ofstream file;
         file.open(path + "server" + filename + ".csv", ios_base::app);
 
         for (uint i{}; i < lines.size(); ++i) {
-            if (cnt != "0" && i == stoi(string(cnt))) {
+            if (cnt != "0" && i == stoul(string(cnt))) {
                 break;
             }
             file << "\n" << lines[i];
@@ -302,7 +302,6 @@ int main() {
     try {
         using traits_t =
 			restinio::tls_traits_t<
-            //restinio::traits_t<
 				asio_timer_manager_t,
 				single_threaded_ostream_logger_t,
 				router_t >;
