@@ -17,10 +17,12 @@ void processResponse(cpr::Response r, string encAuth="") {
     } else if (r.status_code == 401) {
         spdlog::warn("Not authorized, redirect to /login");
 
-        cpr::Response loginR = cpr::Get(cpr::Url{"localhost:1234/login"},
-            cpr::Header{{"Authorization", "Basic:" + encAuth}});
+        cpr::Session session;
+        session.SetVerifySsl(false);
+        session.SetOption(cpr::Url{"https://localhost:1234/login"});
+        session.SetOption(cpr::Header{{"Authorization", "Basic:" + encAuth}});
 
-        processResponse(loginR, encAuth);
+        processResponse(session.Get(), encAuth);
     } else if (r.status_code == 404) {
         spdlog::error("Resource / not found");
     } else if (r.status_code == 409) {
@@ -83,6 +85,11 @@ int main(int argc, char* argv[]) {
     string encAuth = base64_encode(reinterpret_cast<const unsigned char*>(
         auth.c_str()), auth.length());
 
+    cpr::Session session;
+    session.SetVerifySsl(false);
+    session.SetOption(cpr::Multipart{{"File", cpr::File{file}}});
+    session.SetOption(cpr::Header{{"Authorization", "Basic:" + encAuth}});
+
     if (p_flag) {
         if (h_flag) {
             url = "/hartware";
@@ -98,10 +105,8 @@ int main(int argc, char* argv[]) {
             url += "/" + to_string(cnt);
         }
 
-        auto r = cpr::Post(cpr::Url{"https://localhost:1234" + url},
-                           cpr::Multipart{{"File", cpr::File{file}}},
-                           cpr::Header{{"Authorization", "Basic:" + encAuth}, 
-                           {"Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"}});
+        session.SetOption(cpr::Url{"https://localhost:1234" + url});
+        auto r = session.Post();
 
         spdlog::info("User called POST " + url);
         processResponse(r, encAuth);
@@ -116,8 +121,8 @@ int main(int argc, char* argv[]) {
             url = "/seilware";
         }
 
-        auto r = cpr::Get(cpr::Url{"https://localhost:1234" + url},
-                 cpr::Header{{"Authorization", "Basic:" + encAuth}});
+        session.SetOption(cpr::Url{"https://localhost:1234" + url});
+        auto r = session.Get();
 
         spdlog::info("User called GET " + url);
         processResponse(r, encAuth);
