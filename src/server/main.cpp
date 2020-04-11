@@ -9,8 +9,6 @@
 #include <restinio/helpers/file_upload.hpp>
 #include "restinio/tls.hpp"
 
-#include "materialverwaltung.h"
-
 using namespace std;
 using namespace restinio;
 using namespace restinio::file_upload;
@@ -58,7 +56,7 @@ auto on_get(request_handle_t req, string filename) {
 }
 
 //checks if file for posted Seilwaren are correct
-bool on_post_seil(vector<string> tokens, string filename="") {
+bool on_post_seil(vector<string> tokens, [[maybe_unused]]string filename="") {
     if (tokens.size() != 7) {
         return false;
     }
@@ -93,7 +91,7 @@ bool on_post_seil(vector<string> tokens, string filename="") {
 }
 
 //checks if file for posted Hartwaren are correct
-bool on_post_hart(vector<string> tokens, string filename="") {
+bool on_post_hart(vector<string> tokens, [[maybe_unused]]string filename="") {
     if (tokens.size() != 6) {
         return false;
     }

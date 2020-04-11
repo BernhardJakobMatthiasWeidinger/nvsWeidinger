@@ -1,5 +1,5 @@
 project('05_uml_2_restino', 'cpp', 
-        default_options: ['cpp_std=c++2a', 'warning_level=1', 'werror=false'])
+        default_options: ['cpp_std=c++2a', 'warning_level=2', 'werror=true'])
 
 add_global_arguments('-lssl', language: 'cpp')
 add_global_arguments('-lcrypto', language: 'cpp')
@@ -14,11 +14,10 @@ inc_dir = include_directories(['include',
                                '../libs/restinio/'])
 
 cc = meson.get_compiler('cpp')
-lib_fmt = cc.find_library('fmt', dirs: ['/home/bernhard/Desktop/test/fmt-6.1.2/build/'])
-lib_http_parser = cc.find_library('http_parser', dirs: ['/home/bernhard/Desktop/test/nvsWeidinger/libs/http-parser/build/'])
-lib_curl = cc.find_library('curl', dirs: ['/home/bernhard/Desktop/test/nvsWeidinger/libs/cpr/build/lib'])
-lib_cpr = cc.find_library('cpr', dirs: ['/home/bernhard/Desktop/test/nvsWeidinger/libs/cpr/build/lib'])
-
+lib_fmt = cc.find_library('fmt', dirs: [meson.current_source_dir() + '/../fmt-6.1.2/build/'])
+lib_http_parser = cc.find_library('http_parser', dirs: [meson.current_source_dir() + '/libs/http-parser/build/'])
+lib_curl = cc.find_library('curl', dirs: [meson.current_source_dir() + '/libs/cpr/build/lib'])
+lib_cpr = cc.find_library('cpr', dirs: [meson.current_source_dir() + '/libs/cpr/build/lib'])
 
 srcClient = ['src/client/main.cpp', 'src/base64.cpp']
 srcServer = ['src/server/main.cpp', 'src/base64.cpp', 'src/pystring.cpp'] 
