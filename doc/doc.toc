@@ -1,0 +1,20 @@
+\boolfalse {citerequest}\boolfalse {citetracker}\boolfalse {pagetracker}\boolfalse {backtracker}\relax 
+\babel@toc {ngerman}{}
+\defcounter {refsection}{0}\relax 
+\contentsline {chapter}{\numberline {1}RESTinio}{2}{chapter.2}% 
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {1.1}Express}{2}{section.3}% 
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {1.1.1}main}{2}{subsection.4}% 
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {1.1.2}server\_handler()}{3}{subsection.25}% 
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {1.1.3}Header und Query Parameter}{3}{subsection.48}% 
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {1.2}Senden von Dateien}{4}{section.61}% 
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {1.2.1}Client zu Server}{4}{subsection.62}% 
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {1.2.2}Server zu Client}{4}{subsection.63}% 
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {1.3}TLS}{4}{section.64}% 

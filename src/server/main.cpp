@@ -329,5 +329,4 @@ int main() {
 		cerr << "Error: " << ex.what() << endl;
 		return 1;
 	}
-   
 }
