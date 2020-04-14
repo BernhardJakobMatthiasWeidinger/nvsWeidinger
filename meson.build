@@ -1,8 +1,9 @@
 project('05_uml_2_restino', 'cpp', 
-        default_options: ['cpp_std=c++2a', 'warning_level=2', 'werror=true'])
+        default_options: ['cpp_std=c++2a', 'warning_level=3', 'werror=true'])
 
 add_global_arguments('-lssl', language: 'cpp')
 add_global_arguments('-lcrypto', language: 'cpp')
+add_global_arguments('-Wno-unknown-pragmas', language: 'cpp')
 
 inc_dir = include_directories(['include',
                                get_option('cli11_include_dir'),

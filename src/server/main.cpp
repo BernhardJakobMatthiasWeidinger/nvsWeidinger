@@ -1,13 +1,17 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wredundant-move"
+#include "restinio/all.hpp"
+#include <restinio/helpers/multipart_body.hpp>
+#include <restinio/helpers/file_upload.hpp>
+#include "restinio/tls.hpp"
+#pragma GCC diagnostic pop
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
 
 #include "base64.h"
 #include "pystring.h"
-#include "restinio/all.hpp"
-#include <restinio/helpers/multipart_body.hpp>
-#include <restinio/helpers/file_upload.hpp>
-#include "restinio/tls.hpp"
 
 using namespace std;
 using namespace restinio;
